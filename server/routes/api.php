@@ -1,0 +1,16 @@
+<?php
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+
+Route::group(["prefix" => "v1"], function(){
+
+    Route::post('/login', [AuthController::class, "login"]);
+    Route::post('/register', [AuthController::class, "register"]);
+
+    Route::group(["middleware" => "jwt.auth"], function(){
+        
+
+    });
+
+});
