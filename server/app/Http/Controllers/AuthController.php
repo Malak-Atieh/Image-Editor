@@ -33,20 +33,15 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $user = Auth::user();
-
         return response()->json([
             "success" => true,
-            "user" => $user,
-            'authorization' => [
-                    'token' => $token,
-                    'type' => 'bearer',
-            ]
+            'token' => $token,
+
         ]);
     }
 
     function register(Request $request){
-        
+
         $validator = Validator::make($request->all(), [
             'full_name' => 'nullable|string|max:255',
             'username' => 'nullable|string|max:255|unique:users,username,' . auth()->id(),
