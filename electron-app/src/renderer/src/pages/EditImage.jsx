@@ -10,7 +10,6 @@ const aspectRatios = [
   { label: "5:4", value: 5 / 4 },
   { label: "6:4", value: 6 / 4 },
   { label: "7:5", value: 7 / 5 },
-  { label: "10:8", value: 10 / 8 },
 ];
 
 export default function EditImage() {

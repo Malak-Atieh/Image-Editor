@@ -9,6 +9,12 @@ import icon from '../../resources/icon.png?asset'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const imagesDir = path.join(app.getPath('userData'), 'images');
+
+
+if (!fs.existsSync(imagesDir)) {
+  fs.mkdirSync(imagesDir);
+}
 function createWindow() {
   console.log("Electron main process started...");
 
@@ -22,7 +28,7 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
-      webSecurity: false, // Add this for local file loading
+      webSecurity: false, 
       nodeIntegration: false, // Enable if you need Node.js in renderer
       contextIsolation: true // Required for some Electron versions
     }
@@ -85,19 +91,67 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-ipcMain.handle('save-image', async (_, { base64, originalName, title, type }) => {
+
+
+ipcMain.handle('save-image', async (event, { title, base64, originalName, type }) => {
   try {
-    const matches = base64.match(/^data:.+\/(.+);base64,(.*)$/)
-    const buffer = Buffer.from(matches[2], 'base64')
-    const fileName = `${title}-${originalName}`
-    const savePath = path.join(app.getPath('pictures'), 'ImageGallery', fileName)
+    const extension = type.split('/')[1]; // e.g. image/png → png
+    const safeTitle = title.replace(/[<>:"\/\\|?*]+/g, ''); // remove invalid file characters
+    const fileName = `${Date.now()}-${safeTitle}.${extension}`;
+    const filePath = path.join(imagesDir, fileName);
 
-    fs.mkdirSync(path.dirname(savePath), { recursive: true })
-    fs.writeFileSync(savePath, buffer)
+    const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(filePath, base64Data, 'base64');
 
-    return { success: true, path: savePath }
-  } catch (error) {
-    console.error('Failed to save image:', error)
-    return { success: false }
+    // Save metadata (optional, or store in DB later)
+    const meta = {
+      title,
+      fileName,
+      path: filePath,
+      uploadedAt: new Date().toISOString(),
+    };
+
+    const dbPath = path.join(imagesDir, 'metadata.json');
+    let db = [];
+    if (fs.existsSync(dbPath)) {
+      db = JSON.parse(fs.readFileSync(dbPath));
+    }
+    db.push(meta);
+    fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error saving image:', err);
+    return { success: false };
   }
-})
+});
+
+ipcMain.handle('fetch-images', async () => {
+  const dbPath = path.join(imagesDir, 'metadata.json');
+  if (!fs.existsSync(dbPath)) return [];
+
+  const data = fs.readFileSync(dbPath);
+  return JSON.parse(data);
+});
+
+ipcMain.handle("get-image-data-url", async (event, imagePath) => {
+  try {
+    const imageBuffer = fs.readFileSync(imagePath);
+    const base64 = imageBuffer.toString('base64');
+    const ext = imagePath.split('.').pop(); // Get file extension
+    return `data:image/${ext};base64,${base64}`;
+  } catch (err) {
+    console.error("Failed to read image:", err);
+    return null;
+  }
+});
+ipcMain.handle('delete-image', async (event, filePath) => {
+  try {
+    console.log("Received delete request for:", filePath);
+    fs.unlinkSync(filePath);
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to delete image:", error);
+    return { success: false, error: error.message };
+  }
+});
