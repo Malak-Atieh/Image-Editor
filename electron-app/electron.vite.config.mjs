@@ -4,7 +4,13 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   main: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      outDir: 'out/main', // This is where Electron expects the main build to go
+    rollupOptions: {
+        input: 'src/main/index.js', // <--- YOUR main process entry
+      }
+    }
   },
   preload: {
     plugins: [externalizeDepsPlugin()]
@@ -15,6 +21,8 @@ export default defineConfig({
         '@renderer': resolve('src/renderer/src')
       }
     },
+    base: './', 
     plugins: [react()]
-  }
+  },
+
 })

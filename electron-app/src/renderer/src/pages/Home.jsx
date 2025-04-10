@@ -4,12 +4,11 @@ import Gallery from '../components/Gallery';
 const DisplayImages = ()=>{
 
     return(
-        <div>
+        
+        <div className='p-4 bg-white  rounded-xl mb-4 '>
             <SearchBar />
             <Gallery />  
         </div>
-
     );
-
 }
 export default DisplayImages;

@@ -1,17 +1,23 @@
 import Navbar from './components/NavBar';
-import { Routes, Route, useLocation } from "react-router-dom";
-import DisplayImages from './pages/DisplayImages';
-
-const { pathname } = useLocation();
+import {Routes, Route, useLocation } from "react-router-dom";
+import Home from './pages/Home';
+import UploadImage from './pages/UploadImage';
+import EditImage from "./pages/EditImage";
 
 function App() {
-  return (
-    <div className="p-4 max-w-7xl mx-auto">
-      {pathname !== "/login" &&<Navbar />}
-      <Routes>
-        <Route path="/" element={<DisplayImages />}/>
-      </Routes>
-    </div>
+  const { pathname } = useLocation();
+
+  return (   
+  <>       
+     
+    {pathname !== "/login" &&<Navbar />}
+        <Routes>
+          <Route path="/" element={<Home />}/>
+          <Route path="/upload" element={<UploadImage />} />
+          <Route path="/edit" element={<EditImage />} />
+        </Routes>
+
+  </>
   );
 }
 

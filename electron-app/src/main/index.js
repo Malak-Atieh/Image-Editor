@@ -1,22 +1,33 @@
+
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
-import { join } from 'path'
+import path  from 'path'
+import fs from 'fs'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 function createWindow() {
+  console.log("Electron main process started...");
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1000,
+    height: 800,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      preload: path.join(__dirname, '../preload/index.js'),
+      sandbox: false,
+      webSecurity: false, // Add this for local file loading
+      nodeIntegration: false, // Enable if you need Node.js in renderer
+      contextIsolation: true // Required for some Electron versions
     }
   })
-
+  
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -30,8 +41,10 @@ function createWindow() {
   // Load the remote URL for development or the local html file for production.
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL'])
+    mainWindow.webContents.openDevTools();
+
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'))
   }
 }
 
@@ -72,3 +85,19 @@ app.on('window-all-closed', () => {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+ipcMain.handle('save-image', async (_, { base64, originalName, title, type }) => {
+  try {
+    const matches = base64.match(/^data:.+\/(.+);base64,(.*)$/)
+    const buffer = Buffer.from(matches[2], 'base64')
+    const fileName = `${title}-${originalName}`
+    const savePath = path.join(app.getPath('pictures'), 'ImageGallery', fileName)
+
+    fs.mkdirSync(path.dirname(savePath), { recursive: true })
+    fs.writeFileSync(savePath, buffer)
+
+    return { success: true, path: savePath }
+  } catch (error) {
+    console.error('Failed to save image:', error)
+    return { success: false }
+  }
+})

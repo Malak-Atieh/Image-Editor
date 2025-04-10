@@ -1,0 +1,36 @@
+.cropper-container {
+    position: relative;
+    height: 70vh;
+    width: 100%;
+  }
+  .cropper {
+    position: relative;
+    height: 400px;
+    width: 100%;
+  }
+  .ratio-btn {
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    cursor: pointer;
+  }
+  .ratio-btn.active {
+    background-color: #8e5cff;
+    color: white;
+  }
+  .btn-purple {
+    background-color: #8e5cff;
+    color: white;
+    padding: 0.5rem 1rem;
+    margin-right: 1rem;
+    border-radius: 8px;
+  }
+  .btn-gray {
+    background-color: #ccc;
+    color: black;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+  }
+  
