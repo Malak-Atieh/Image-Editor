@@ -1,21 +1,26 @@
 import { useNavigate } from "react-router-dom";
 
-const ImageCard = ({ src,path, title }) => {
+const ImageCard = ({ src,path, title, onDelete }) => {
   
 const navigate = useNavigate();
 const handleEdit = () => {
   navigate("/edit", { state: { image: src } });
 };
+
 const handleDelete = async () => {
   const confirmDelete = window.confirm("Are you sure you want to delete this image?");
   if (!confirmDelete) return;
 
-  const result = await window.myAPI.deleteImage(path);
-  if (result.success) {
-    alert("Image deleted successfully!");
-    window.location.reload();
-  } else {
-    alert("Failed to delete image.");
+  try {
+    const result = await window.myAPI.deleteImage(path);
+    if (result.success) {
+      onDelete(); // Call parent component's delete handler
+    } else {
+      alert("Failed to delete image.");
+    }
+  } catch (error) {
+    console.error("Delete error:", error);
+    alert("An error occurred while deleting the image.");
   }
 };
     return (

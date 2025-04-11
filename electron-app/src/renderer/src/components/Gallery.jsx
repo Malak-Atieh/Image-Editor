@@ -30,11 +30,21 @@ const Gallery = () => {
     fetchImages();
   }, []);
 
+  const handleDeleteImage = (imagePath) => {
+    setImages(prevImages => prevImages.filter(img => img.path !== imagePath));
+  };
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
       {images.map((img, index) => (
-        <ImageCard key={index} src={img.src} title={img.title} path={img.path}/>
+        <ImageCard key={index} 
+        src={img.src} 
+        title={img.title} 
+        path={img.path}
+        onDelete={() => handleDeleteImage(img.path)}
+
+        />
+        
       ))}
     </div>
   );

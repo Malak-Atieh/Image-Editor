@@ -145,10 +145,19 @@ ipcMain.handle("get-image-data-url", async (event, imagePath) => {
     return null;
   }
 });
+
 ipcMain.handle('delete-image', async (event, filePath) => {
+  const dbPath = path.join(imagesDir, 'metadata.json');
+
   try {
-    console.log("Received delete request for:", filePath);
-    fs.unlinkSync(filePath);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }    
+    if (fs.existsSync(dbPath)) {
+      const data = JSON.parse(fs.readFileSync(dbPath, "utf-8"));
+      const updated = data.filter(img => img.path !== filePath);
+      fs.writeFileSync(dbPath, JSON.stringify(updated, null, 2));
+    }
     return { success: true };
   } catch (error) {
     console.error("Failed to delete image:", error);
