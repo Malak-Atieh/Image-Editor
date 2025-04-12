@@ -18,7 +18,7 @@ const Gallery = () => {
             };
           } catch (error) {
             console.warn(`Skipping image at ${img.path}:`, error.message);
-            return null; // Image missing or failed to load
+            return null; 
           }
         })
       );

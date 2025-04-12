@@ -22,7 +22,8 @@
     "@electron-toolkit/utils": "^4.0.0",
     "path-browserify": "^1.0.1",
     "react-easy-crop": "^5.4.1",
-    "react-router-dom": "^7.5.0"
+    "react-router-dom": "^7.5.0",
+    "tailwindcss-filters": "^3.0.0"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config": "^2.0.0",

@@ -57,7 +57,6 @@ export default function EditImage() {
         />
       </div>
 
-      {/* Zoom Slider */}
       <div className="w-full max-w-xl mt-6">
         <label className="text-gray-700 font-medium block mb-2">Zoom</label>
         <input
@@ -71,7 +70,6 @@ export default function EditImage() {
         />
       </div>
 
-      {/* Aspect Ratio Buttons */}
       <div className="flex flex-wrap gap-3 mt-6 justify-center">
         {aspectRatios.map((r) => (
           <button
@@ -88,7 +86,6 @@ export default function EditImage() {
         ))}
       </div>
 
-      {/* Buttons */}
       <div className="mt-8 flex gap-4">
         <button
           onClick={() => navigate(-1)}
