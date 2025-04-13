@@ -22,6 +22,7 @@ if (process.contextIsolated) {
       fetchImages: () => ipcRenderer.invoke('fetch-images'),
       getImageDataUrl: (imagePath) => ipcRenderer.invoke('get-image-data-url', imagePath),
       deleteImage: (path) => ipcRenderer.invoke('delete-image', path),
+      
     })
   } catch (error) {
     console.error(error)

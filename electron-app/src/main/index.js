@@ -95,15 +95,14 @@ app.on('window-all-closed', () => {
 
 ipcMain.handle('save-image', async (event, { title, base64, originalName, type }) => {
   try {
-    const extension = type.split('/')[1]; // e.g. image/png → png
-    const safeTitle = title.replace(/[<>:"\/\\|?*]+/g, ''); // remove invalid file characters
+    const extension = type.split('/')[1]; 
+    const safeTitle = title.replace(/[<>:"\/\\|?*]+/g, ''); 
     const fileName = `${Date.now()}-${safeTitle}.${extension}`;
     const filePath = path.join(imagesDir, fileName);
 
     const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
     fs.writeFileSync(filePath, base64Data, 'base64');
 
-    // Save metadata (optional, or store in DB later)
     const meta = {
       title,
       fileName,
@@ -138,7 +137,7 @@ ipcMain.handle("get-image-data-url", async (event, imagePath) => {
   try {
     const imageBuffer = fs.readFileSync(imagePath);
     const base64 = imageBuffer.toString('base64');
-    const ext = imagePath.split('.').pop(); // Get file extension
+    const ext = imagePath.split('.').pop(); 
     return `data:image/${ext};base64,${base64}`;
   } catch (err) {
     console.error("Failed to read image:", err);
@@ -164,3 +163,29 @@ ipcMain.handle('delete-image', async (event, filePath) => {
     return { success: false, error: error.message };
   }
 });
+
+ipcMain.handle('resave-image', async (event, { fileName, base64 }) => {
+  try {
+    const filePath = path.join(imagesDir, fileName);
+
+    const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(filePath, base64Data, 'base64');
+
+    const dbPath = path.join(imagesDir, 'metadata.json');
+    let db = [];
+    if (fs.existsSync(dbPath)) {
+      db = JSON.parse(fs.readFileSync(dbPath));
+      const index = db.findIndex(item => item.fileName === fileName);
+      if (index !== -1) {
+        db[index].uploadedAt = new Date().toISOString();
+        fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('Error resaving image:', err);
+    return { success: false };
+  }
+});
+
