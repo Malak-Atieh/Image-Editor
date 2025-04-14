@@ -20,9 +20,9 @@ if (process.contextIsolated) {
     contextBridge.exposeInMainWorld('myAPI', {
       saveImage: (data) => ipcRenderer.invoke('save-image', data),
       fetchImages: () => ipcRenderer.invoke('fetch-images'),
-      getImageDataUrl: (imagePath) => ipcRenderer.invoke('get-image-data-url', imagePath),
+      getImageDataUrl: (path) => ipcRenderer.invoke('get-image-data-url', path),
       deleteImage: (path) => ipcRenderer.invoke('delete-image', path),
-      
+      editImage: (data) => ipcRenderer.invoke('save-edited-image',data),
     })
   } catch (error) {
     console.error(error)

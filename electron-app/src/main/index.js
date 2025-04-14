@@ -164,28 +164,63 @@ ipcMain.handle('delete-image', async (event, filePath) => {
   }
 });
 
-ipcMain.handle('resave-image', async (event, { fileName, base64 }) => {
+
+ipcMain.handle('save-edited-image', async (event, { 
+  originalPath,
+  editedBase64,
+  title ,
+  type 
+}) => {
   try {
-    const filePath = path.join(imagesDir, fileName);
-
-    const base64Data = base64.replace(/^data:image\/\w+;base64,/, '');
-    fs.writeFileSync(filePath, base64Data, 'base64');
-
-    const dbPath = path.join(imagesDir, 'metadata.json');
-    let db = [];
-    if (fs.existsSync(dbPath)) {
-      db = JSON.parse(fs.readFileSync(dbPath));
-      const index = db.findIndex(item => item.fileName === fileName);
-      if (index !== -1) {
-        db[index].uploadedAt = new Date().toISOString();
-        fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
-      }
+    console.log("here");
+    const imagesDir = app.getPath('userData');
+    const imagesPath = path.join(imagesDir, 'images');
+    
+    // Ensure images directory exists
+    if (!fs.existsSync(imagesPath)) {
+      fs.mkdirSync(imagesPath, { recursive: true });
     }
 
-    return { success: true };
+    // Generate safe filename
+    const extension = type.split('/')[1] || 'jpg';
+    const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const fileName = `${safeTitle}_${Date.now()}.${extension}`;
+    const filePath = path.join(imagesPath, fileName);
+
+    // Save the image
+    const base64Data = editedBase64.replace(/^data:image\/\w+;base64,/, '');
+    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
+
+    // Update metadata
+    const dbPath = path.join(imagesDir, 'metadata.json');
+    let db = [];
+    
+    if (fs.existsSync(dbPath)) {
+      db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+    }
+
+    const meta = {
+      title: path.parse(fileName).name,
+      fileName,
+      path: filePath,
+      isEdited: true,
+      editedAt: new Date().toISOString(),
+      originalPath: originalPath || null
+    };
+
+    db.push(meta);
+    fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
+
+    return { 
+      success: true, 
+      path: filePath,
+    };
   } catch (err) {
-    console.error('Error resaving image:', err);
-    return { success: false };
+    console.error('Save error:', err);
+    return { 
+      success: false, 
+      error: err.message,
+      stack: err.stack 
+    };
   }
 });
-

@@ -40,31 +40,54 @@ const FilterImage = () => {
     transition: "filter 0.3s ease"
   });
 
-  const handleSave = async () => {
+  const handleSave= async () => {
     try {
-      // 1. Get the edited image as base64
+      // Get the image element properly
+          if (!imageRef.current) {
+      throw new Error('Image reference not available');
+    }
+
+    const imgElement = imageRef.current;
+
+    // Wait for image to load if needed
+    if (!imgElement.complete) {
+      await new Promise((resolve, reject) => {
+        imgElement.onload = resolve;
+        imgElement.onerror = () => reject(new Error('Image failed to load'));
+      });
+    }
+      // Create canvas
       const canvas = document.createElement('canvas');
-      const img = document.querySelector('.edited-image'); // Your image element
-      canvas.width = img.naturalWidth;
-      canvas.height = img.naturalHeight;
+      canvas.width = imgElement.naturalWidth;
+      canvas.height = imgElement.naturalHeight;
       
       const ctx = canvas.getContext('2d');
-      ctx.filter = getComputedStyle(img).filter; // Apply current filters
-      ctx.drawImage(img, 0, 0);
       
-      const editedBase64 = canvas.toDataURL('image/jpeg', 0.9); // Adjust quality
-  
-      // 2. Send to main process
-      const result = await window.electronAPI.saveEditedImage({
-        originalPath: location.state.originalPath, // Pass original path
-        editedBase64,
-        title: `Edited ${location.state.title}`,
-        type: 'image/jpeg'
-      });
+      // Apply current filters from computed style
+      const computedStyle = window.getComputedStyle(imgElement);
+      ctx.filter = computedStyle.filter || 'none';
+      
+      // Draw the image
+      ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+      
+      // Get the base64 data
+      const extension = imageSrc.split('.').pop().toLowerCase();
+      const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
+      const base64 = canvas.toDataURL(mimeType, 0.92);
+
+      const saveData = {
+        originalPath: location.state?.originalPath || imageSrc,
+        base64Data: base64, 
+        title: `Edited_${Date.now()}`,
+        type: mimeType
+      };
+
+      // Send to main process
+      const result = await window.myAPI.editImage(saveData);
   
       if (result.success) {
         alert('Image saved successfully!');
-        navigate('/gallery'); // Or wherever you want to go
+        navigate('/');
       } else {
         throw new Error(result.error || 'Failed to save image');
       }
@@ -104,10 +127,12 @@ const FilterImage = () => {
 
         <div className="flex-1 bg-white rounded-xl shadow p-4 flex justify-center items-center">
           <img
+          id="edit"
             ref={imageRef}
             src={imageSrc}
-            alt="Main"
+            alt="Edited Preview"
             style={getFilterStyle()}
+            crossOrigin="anonymous"
             className="max-h-[500px] max-w-full object-contain rounded-xl"
           />
         </div>
