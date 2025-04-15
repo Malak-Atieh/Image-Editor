@@ -21,4 +21,14 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+<<<<<<< HEAD
+<<<<<<<< HEAD:.gitignore
 **/node_modules
+========
+node_modules/
+**/node_modules/
+>>>>>>>> 9896223b9524bffee8118c6ccac6089b3da1da4a:server/chat-server/.gitignore
+=======
+node_modules/
+**/node_modules/
+>>>>>>> 9896223b9524bffee8118c6ccac6089b3da1da4a
