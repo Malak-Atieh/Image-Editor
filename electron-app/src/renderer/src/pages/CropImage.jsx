@@ -31,7 +31,7 @@ export default function EditImage() {
     setLoading(true);
     try {
       const croppedImgUrl = await getCroppedImg(imageSrc, croppedAreaPixels);
-      navigate("/", { state: { croppedImage: croppedImgUrl } });
+      navigate("/gallery", { state: { croppedImage: croppedImgUrl } });
     } catch (e) {
       console.error(e);
     }

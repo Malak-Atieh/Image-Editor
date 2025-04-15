@@ -6,14 +6,20 @@ export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],
     build: {
-      outDir: 'out/main', // This is where Electron expects the main build to go
+      outDir: 'out/main', 
     rollupOptions: {
-        input: 'src/main/index.js', // <--- YOUR main process entry
+        input: 'src/main/index.js', 
       }
     }
   },
   preload: {
-    plugins: [externalizeDepsPlugin()]
+    plugins: [externalizeDepsPlugin()],
+    build: {
+      outDir: 'out/preload', // Match Electron's expected output directory
+      rollupOptions: {
+        input: 'src/preload/index.js' // Explicit preload entry point
+      }
+    }
   },
   renderer: {
     resolve: {

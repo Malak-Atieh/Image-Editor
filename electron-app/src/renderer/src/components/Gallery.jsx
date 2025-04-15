@@ -5,31 +5,29 @@ const Gallery = () => {
   const [images, setImages] = useState([]);
 
   useEffect(() => {
-    const fetchImages = async () => {
-      const rawImages = await window.myAPI.fetchImages();
-  
-      const withUrls = await Promise.all(
-        rawImages.map(async (img) => {
-          try {
-            const dataUrl = await window.myAPI.getImageDataUrl(img.path);
-            return {
-              ...img,
-              src: dataUrl,
-            };
-          } catch (error) {
-            console.warn(`Skipping image at ${img.path}:`, error.message);
-            return null; 
-          }
-        })
-      );
-      const validImages = withUrls.filter((img) => img !== null);
-
-      setImages(validImages);
-    };
-  
     fetchImages();
   }, []);
+  const fetchImages = async () => {
+    const rawImages = await window.myAPI.fetchImages();
 
+    const withUrls = await Promise.all(
+      rawImages.map(async (img) => {
+        try {
+          const dataUrl = await window.myAPI.getImageDataUrl(img.path);
+          return {
+            ...img,
+            src: dataUrl,
+          };
+        } catch (error) {
+          console.warn(`Skipping image at ${img.path}:`, error.message);
+          return null; 
+        }
+      })
+    );
+    const validImages = withUrls.filter((img) => img !== null);
+
+    setImages(validImages);
+  };
   const handleDeleteImage = (imagePath) => {
     setImages(prevImages => prevImages.filter(img => img.path !== imagePath));
   };

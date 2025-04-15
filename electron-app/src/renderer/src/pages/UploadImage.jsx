@@ -1,8 +1,10 @@
 import { useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 
 const UploadImage = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [title, setTitle] = useState("");
+  const navigate = useNavigate();
   const [fileData, setFileData] = useState(null);
   const fileInputRef = useRef();
 
@@ -40,6 +42,7 @@ const UploadImage = () => {
     })
   
     if (result.success) {
+      navigate("/gallery");
       alert("Image saved successfully!")
     } else {
       alert("Failed to save image.")

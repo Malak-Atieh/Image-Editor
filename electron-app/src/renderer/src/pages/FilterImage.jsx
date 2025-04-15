@@ -87,7 +87,7 @@ const FilterImage = () => {
   
       if (result.success) {
         alert('Image saved successfully!');
-        navigate('/');
+        navigate('/gallery');
       } else {
         throw new Error(result.error || 'Failed to save image');
       }
