@@ -10,8 +10,17 @@ class MessageController extends Controller
 {
     public function index()
     {
-        $messages = Message::with('user:id,name')->latest()->take(100)->get()->reverse()->values();
-        return response()->json($messages);
+        return Message::with('user')->latest()->take(50)->get();
+    }
+    public function store(Request $request)
+    {
+        $message = Auth::user()->messages()->create([
+            'content' => $request->content
+        ]);
+
+        broadcast(new NewMessage($message->load('user')))->toOthers();
+
+        return response()->json($message, 201);
     }
 
 }

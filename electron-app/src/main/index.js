@@ -1,4 +1,3 @@
-
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import path  from 'path'
 import fs from 'fs'
@@ -29,7 +28,7 @@ function createWindow() {
       preload: path.join(__dirname, '../preload/index.js'),
       sandbox: false,
       webSecurity: false, 
-      nodeIntegration: false, // Enable if you need Node.js in renderer
+      nodeIntegration: true, // Enable if you need Node.js in renderer
       contextIsolation: true // Required for some Electron versions
     }
   })

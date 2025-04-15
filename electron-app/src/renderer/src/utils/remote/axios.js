@@ -1,7 +1,5 @@
 import axios from "axios";
-import { BASE_URL } from "../../../env";
-import {getAuthToken} from "../../apis/remote";
-axios.defaults.baseURL = `${BASE_URL}hr`; 
+axios.defaults.baseURL = `http://localhost:8000/api/v1`; 
 axios.defaults.withCredentials = true;
 axios.defaults.headers.common["Content-Type"] = "application/json";
 
@@ -12,9 +10,12 @@ export const request = async ({ method, route, body, headers,token=null, params 
       ...headers,
       "Content-Type": "application/json"
     };
-    token = getAuthToken()
-    if (token) {
-      requestHeaders["Authorization"] = `Bearer ${token}`;
+    const authToken = token || localStorage.getItem("token");
+
+    if (authToken) {
+      requestHeaders["Authorization"] = `Bearer ${authToken}`;
+      console.log("Attaching token:", authToken); // Debug
+
     }
     const response = await axios.request({
       method, 
@@ -25,23 +26,38 @@ export const request = async ({ method, route, body, headers,token=null, params 
     });
     return response.data;
   } catch (error) {
-    console.error("API Request Error:", error); 
+    console.error("API Error:", error);
+
     if (error.response) {
+      const { status, data } = error.response;
+      
+      if (status === 422 && data.errors) {
+        return {
+          error: true,
+          status,
+          message: "Validation failed",
+          errors: data.errors,
+        };
+      }
+
+      if (status === 401) {
+        return {
+          error: true,
+          status,
+          message: data.message || "Unauthorized",
+        };
+      }
+
       return {
         error: true,
-        status: error.response.status,
-        message: error.response.data?.message || "API Error",
+        status,
+        message: data.message || `Request failed with status ${status}`,
       };
-    } else if (error.request) {
-      return {
-        error: true,
-        message: "Network error. Check your connection.",
-      };
-    } else {
+    }
+
     return {
       error: true,
-      message: error.response ? error.response.data : error.message,
+      message: error.message || "Network error",
     };
-  }
   }
 };

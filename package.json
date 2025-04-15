@@ -1,0 +1,13 @@
+{
+    "private": true,
+    "scripts": {
+        "start:electron": "cd electron-app && npm start",
+        "start:laravel": "cd laravel-server && php artisan serve --port=8000",
+        "start:chat": "cd chat-server && node server.js",
+        "start:all": "concurrently -n \"LARAVEL,CHAT,ELECTRON\" -c \"bgBlue.bold,bgGreen.bold,bgMagenta.bold\" \"npm:start:laravel\" \"npm:start:chat\" \"npm:start:electron\"",
+        "install:all": "cd electron-app && npm install && cd ../laravel-server && composer install && cd ../chat-server && npm install"
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
