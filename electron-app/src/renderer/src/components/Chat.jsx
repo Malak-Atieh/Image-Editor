@@ -1,119 +1,83 @@
-import { useState, useEffect, useRef } from 'react';
-import socket from '../../../services/socket';
-import '../assets/chat.css';
-import { request } from "../utils/remote/axios";
+import { useEffect, useState } from 'react';
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState(null);
-  const messagesEndRef = useRef(null);
-
-  const user = JSON.parse(localStorage.getItem('user'));
+  const [socket, setSocket] = useState(null);
   const token = localStorage.getItem('token');
 
   useEffect(() => {
-    if (!token || !user?.id) {
-        console.error('authentication required');
+    // Connect to WebSocket
+    const ws = new WebSocket('ws://localhost:3001');
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+      if (!token) {
+        console.error('No token found!');
         return;
       }
-      loadInitialMessages();
+      // Authenticate with JWT
+      ws.send(JSON.stringify({
+        type: 'auth',
+        token: token
+      }));
+    };
 
-      // Socket connection
-      socket.connect(token, user.id);
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
       
-      // Socket event handlers
-      socket.onMessage((message) => {
-        setMessages(prev => [...prev, message]);
-        scrollToBottom();
-      });
-  
-      socket.onConnectionChange((connected) => {
-        setIsConnected(connected);
-        if (connected) scrollToBottom();
-      });
-  
-      socket.onError((err) => {
-        setError('Connection error. Try refreshing.');
-        console.error('Socket error:', err);
-      });
-  
-      return () => {
-        socket.disconnect();
-      };
-  }, [token, user.id]);
+      if (data.type === 'history') {
+        setMessages(data.messages);
+      } 
+      else if (data.type === 'message') {
+        setMessages(prev => [data, ...prev]);
+      }
+    };
 
-  const loadInitialMessages = async () => {
-    try {
-      
-      const response =await request({
-              method: requestMethods.GET,
-              route: "/messages",
-              body: form,  
-            }); 
-      setMessages(response.data); 
-    } catch (err) {
-      setError('Failed to load message history');
-      console.error(err);
-    }
-  };
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    try {
-      await socket.sendMessage(input);
-      setInput('');
-    } catch (err) {
-      setError('Failed to send message');
-      console.error(err);
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    setSocket(ws);
+
+    return () => {
+      ws.close();
+    };
+  }, [token]);
+
+  const sendMessage = (content) => {
+    if (socket && socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: 'message',
+        content: content
+      }));
     }
   };
 
   return (
-    <div className="chat-container">
-      <div className="status-bar">
-        {error && <div className="error">{error}</div>}
-        <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-          {isConnected ? 'Online' : 'Offline'}
+    <div>
+      {/* Message list */}
+      {messages.map(msg => (
+        <div key={msg.id}>
+          <strong>{msg.username}:</strong> {msg.content}
         </div>
-      </div>
+      ))}
       
-      <div className="messages">
-        {messages.length === 0 ? (
-          <div className="empty-state">No messages yet. Be the first to chat!</div>
-        ) : (
-          messages.map((msg) => (
-            <div key={msg.id || msg.timestamp} className="message">
-              <div className="message-header">
-                <strong>{msg.username || `User ${msg.userId}`}</strong>
-                <span className="timestamp">
-                  {new Date(msg.timestamp).toLocaleTimeString()}
-                </span>
-              </div>
-              <div className="message-content">{msg.content}</div>
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      <form onSubmit={handleSubmit} className="message-form">
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          disabled={!isConnected}
-        />
-        <button type="submit" disabled={!input.trim() || !isConnected}>
-          {isConnected ? 'Send' : 'Connecting...'}
-        </button>
-      </form>
+      {/* Message input */}
+      <input 
+        type="text" 
+        onClick={(e) => {
+          if (e.key === 'Enter' && e.target.value) {
+            sendMessage(e.target.value);
+            e.target.value = '';
+          }
+        }}
+      />
     </div>
   );
 };
 
-export default  Chat;
+export default Chat;

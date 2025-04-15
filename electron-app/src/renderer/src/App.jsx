@@ -5,7 +5,7 @@ import UploadImage from './pages/UploadImage';
 import CropImage from "./pages/CropImage";
 import FilterImage from "./pages/FilterImage";
 import Login from './pages/Login';
-//import Chat from './components/Chat';
+import Chat from './components/Chat';
 import SignUp from './pages/SignUp';
 
 function App() {
@@ -20,6 +20,7 @@ function App() {
           <Route path="/signup" element={<SignUp />} />
           <Route path="/gallery" element={<Home />}/>
           <Route path="/upload" element={<UploadImage />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/crop" element={<CropImage />} />
           <Route path="/edit" element={<FilterImage />} />
 

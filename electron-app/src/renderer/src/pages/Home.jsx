@@ -1,7 +1,7 @@
 import SearchBar from '../components/SearchBar';
 import Gallery from '../components/Gallery';
 
-const DisplayImages = ()=>{
+const Home = ()=>{
 
     return(
         
@@ -11,4 +11,4 @@ const DisplayImages = ()=>{
         </div>
     );
 }
-export default DisplayImages;
+export default Home;
