@@ -19,58 +19,51 @@ async function getRecentMessages() {
   );
   return messages;
 }
-
+// server.js (WebSocket server)
 wss.on('connection', async (ws, req) => {
-  // Send recent messages when client connects
-  try {
-    const messages = await getRecentMessages();
-    ws.send(JSON.stringify({
-      type: 'history',
-      messages: messages.reverse() // Show oldest first
-    }));
-  } catch (error) {
-    console.error('Failed to load messages:', error);
-  }
-
+  console.log("hereee");
+  // Authentication middleware
   ws.on('message', async (data) => {
     try {
       const message = JSON.parse(data);
       
-      // Authentication
       if (message.type === 'auth') {
-        try {
-          const decoded = jwt.verify(message.token, process.env.JWT_SECRET);
-          ws.userId = decoded.userId;
-          ws.username = decoded.username;
-          console.log(`User ${ws.username} connected`);
-        } catch (error) {
-          ws.close(1008, 'Invalid token');
-        }
+        const decoded = jwt.verify(message.token, process.env.JWT_SECRET);
+        ws.userId = decoded.sub; // Standard JWT uses 'sub' for user ID
+        ws.username = decoded.name;
+        console.log(`User ${ws.username} connected`);
+        
+        // Send message history
+        const messages = await getRecentMessages();
+        ws.send(JSON.stringify({
+          type: 'history',
+          messages: messages.reverse()
+        }));
         return;
       }
 
-      // Message handling
       if (message.type === 'message' && ws.userId) {
         const messageId = await saveMessage(ws.userId, message.content);
         
-        const broadcastMessage = {
-          id: messageId,
-          type: 'message',
-          userId: ws.userId,
-          username: ws.username,
-          content: message.content,
-          timestamp: new Date().toISOString()
-        };
-
-        // Broadcast to all connected clients
+        // Broadcast to all clients
         wss.clients.forEach(client => {
-          if (client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(broadcastMessage));
+          if (client !== ws && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              id: messageId,
+              type: 'message',
+              userId: ws.userId,
+              username: ws.username,
+              content: message.content,
+              timestamp: new Date().toISOString()
+            }));
           }
         });
       }
     } catch (error) {
-      console.error('Error handling message:', error);
+      console.error('WebSocket error:', error);
+      if (error.name === 'JsonWebTokenError') {
+        ws.close(1008, 'Invalid token');
+      }
     }
   });
 });

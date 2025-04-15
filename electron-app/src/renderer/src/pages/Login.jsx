@@ -33,7 +33,6 @@ const Login = () => {
       });
       console.log(response);
       if (response.success) {
-        localStorage.setItem("token", response.authorization.token);
         localStorage.setItem("user",JSON.stringify(response.user));
         console.log("Stored token:", localStorage.getItem("token")); 
 
