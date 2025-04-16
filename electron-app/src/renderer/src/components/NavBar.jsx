@@ -39,7 +39,7 @@ const Navbar = () => {
           <Box size={20} />
           <span>Chat</span>
         </Link>
-        <span className={`flex items-center gap-1 text-l ${location.pathname === "/edit" ? "text-purple-500" : "text-gray-200"}`}>
+        <span className={`flex items-center gap-1 text-l ${location.pathname === "/edit" || location.pathname === "/crop"? "text-purple-500" : "text-gray-200"}`}>
         <Edit size={20} />
         Edit
         </span>

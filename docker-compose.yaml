@@ -2,19 +2,26 @@ services:
   server:
     image: bitnami/laravel
     volumes:
-      -./server:/app
+      - ./server:/app
     environment: 
-      - LARAVEL_DATABASE_HOST= database
-      - LARAVEL_DATABASE_NAME= editor
+      - LARAVEL_DATABASE_HOST=database
+      - LARAVEL_DATABASE_NAME=editor
       - LARAVEL_DATABASE_USER=root
       - LARAVEL_DATABASE_PASSWORD=sef61
       - LARAVEL_DATABASE_PORT_NUMBER=3306
-    retart: always
+    restart: always
     ports:
-      - 8000:8000  
+      - "8000:8000" 
+    depends_on:
+      - database
     command: ./shell
   database:
     image: mysql:8.0
     environment:
-     - MYSQL_ROOT_PASSWORD = sef61
-     - MYSQL_DATABASE= editor
+     - MYSQL_ROOT_PASSWORD=sef61
+     - MYSQL_DATABASE=editor
+    volumes:
+      - db-data:/var/lib/mysql
+    
+volumes:
+  db-data:
