@@ -34,20 +34,35 @@ const UploadImage = () => {
   };
 
   const handleUpload = async () => {
-    if (!fileData || !title) return alert("Please provide an image and a title.")
-    
-    const result = await window.myAPI.saveImage({
-      title,
-      ...fileData,
-    })
-  
-    if (result.success) {
-      navigate("/gallery");
-      alert("Image saved successfully!")
-    } else {
-      alert("Failed to save image.")
+    const userString= localStorage.getItem("user");
+    if (!userString) {
+      alert("Please log in to upload images");
+      navigate("/login");
+      return;
     }
-  }
+    try {
+      const user = JSON.parse(userString);
+      
+      if (!fileData || !title) return alert("Please provide an image and a title.");
+    
+      const result = await window.myAPI.saveImage({
+        userId: String(user.id),
+        title: title.trim(),
+        base64: fileData.base64,
+        type: fileData.type,
+      })
+  
+      if (result.success) {
+        alert("Image saved successfully!")
+        navigate("/gallery");
+      } else {
+        alert(`Failed to save image: ${result.error || 'Unknown error'}`)
+      }
+    }catch (error) {
+        console.error("Upload error:", error);
+        alert("An error occurred during upload. Please try again.");
+      }
+    };
 
   return (
     <div className="p-4 bg-white  rounded-xl mb-4 flex gap-6">

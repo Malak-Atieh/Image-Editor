@@ -19,9 +19,9 @@ if (process.contextIsolated) {
     });
     contextBridge.exposeInMainWorld('myAPI', {
       saveImage: (data) => ipcRenderer.invoke('save-image', data),
-      fetchImages: () => ipcRenderer.invoke('fetch-images'),
-      getImageDataUrl: (path) => ipcRenderer.invoke('get-image-data-url', path),
-      deleteImage: (path) => ipcRenderer.invoke('delete-image', path),
+      fetchImages: (userId) => ipcRenderer.invoke('fetch-images',userId),
+      getImageDataUrl: (data) => ipcRenderer.invoke('get-image-data-url', data),
+      deleteImage: (data) => ipcRenderer.invoke('delete-image', data),
       editImage: (data) => ipcRenderer.invoke('save-edited-image',data),
     })
   } catch (error) {

@@ -13,7 +13,6 @@ Route::group(["prefix" => "v1"], function(){
     Route::middleware('auth:api')->group(function (){
         Route::get('/messages', [MessageController::class, 'index']);
         Route::post('/messages', [MessageController::class, 'store']);
-
     });
 
 });

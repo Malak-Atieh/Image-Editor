@@ -1,14 +1,16 @@
 export default function getCroppedImg(imageSrc, crop) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       const image = new Image();
       image.crossOrigin = "anonymous";
       image.src = imageSrc;
+
       image.onload = () => {
         const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
         canvas.width = crop.width;
         canvas.height = crop.height;
-        const ctx = canvas.getContext("2d");
-  
+
         ctx.drawImage(
           image,
           crop.x,
@@ -21,13 +23,9 @@ export default function getCroppedImg(imageSrc, crop) {
           crop.height
         );
   
-        canvas.toBlob((blob) => {
-          if (!blob) return reject(new Error("Canvas is empty"));
-          const url = URL.createObjectURL(blob);
-          resolve(url);
-        }, "image/jpeg");
+        // Return as base64 string
+        resolve(canvas.toDataURL('image/jpeg'));
       };
-      image.onerror = reject;
     });
   }
   

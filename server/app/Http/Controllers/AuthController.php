@@ -40,19 +40,6 @@ class AuthController extends Controller
 
         $user=Auth::user();
 
-        /*$ip= $request->ip();
-        
-        $geo=Http::get("http://ip-api.com/json/{$ip}")->json();
-
-        $logs = Log::create([
-            'user_id' => $user->id,
-            'ip' => $ip,
-            'country' => $geo['country'] ?? null,
-            'city' => $geo['city'] ?? null,
-            'lat' => $geo['lat'] ?? null,
-            'lon' => $geo['lon'] ?? null,
-        ]);
-        */
         return response()->json([
             "success" => true,
             "authorization" => [
@@ -64,7 +51,6 @@ class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name
             ],
-            'ws_url' => 'ws://localhost:3001' 
         ]);
     }
 

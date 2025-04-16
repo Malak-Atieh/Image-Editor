@@ -23,7 +23,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_key }}
+          key: ${{ secrets.EC2_KEY }}
           script: |
             docker-compose down || true
             git pull origin main

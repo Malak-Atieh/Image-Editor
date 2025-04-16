@@ -34,7 +34,7 @@ const SignUp = () => {
       });
       console.log(response);
       if (response.success) {
-        navigate("/login");
+        navigate("/");
       } else if (response.msg === "missing attr") {
 
         const firstError = Object.values(response.errors)[0][0];

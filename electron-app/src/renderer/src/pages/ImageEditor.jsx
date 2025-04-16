@@ -34,13 +34,9 @@ const ImageEditor = () => {
   // Image data from location state
   const imageSrc = location.state?.image;
   const rawTitle = location.state?.title || 'image';
-  const originalPath = location.state?.originalPath;
+  const originalPath = location.state?.path;
   const title = typeof rawTitle === 'string' ? rawTitle : 'image';
   const safeTitle = title.replace(/[^a-zA-Z0-9_-]/g, '_');
-  
-  if (!imageSrc) {
-    return <p className="text-center mt-10 text-red-500">No image provided.</p>;
-  }
 
   // Combined filter style
   const getFilterStyle = () => ({
@@ -54,66 +50,90 @@ const ImageEditor = () => {
     transition: "filter 0.3s ease"
   });
 
-  // Crop handlers
+  // Crop handler
   const onCropComplete = useCallback((_, croppedAreaPixels) => {
     dispatch(updateCropSettings({ croppedAreaPixels }));
   }, [dispatch]);
 
-  // Save handler
+  // Save handle
   const handleSave = async () => {
     try {
+      const userString = localStorage.getItem("user");
+    if (!userString) {
+      alert("Please log in to view images");
+      navigate("/login");
+      return ;
+    }
+
+    
+    const user = JSON.parse(userString);
+    if (!user?.id) {
+      throw new Error("Invalid user data");
+    }    
       setLoading(true);
       
-      // 1. Get the image element
-      const imgElement = imageRef.current;
-      if (!imgElement) throw new Error('Image reference not available');
-  
-      // 2. Wait for image to load if needed
-      if (!imgElement.complete) {
-        await new Promise((resolve, reject) => {
-          imgElement.onload = resolve;
-          imgElement.onerror = () => reject(new Error('Image failed to load'));
-        });
+       // Get cropped image first if in crop mode
+      let processedImage = imageSrc;
+      if (activeTool === 'crop' && cropSettings.croppedAreaPixels) {
+        processedImage = await getCroppedImg(
+        imageSrc,
+        cropSettings.croppedAreaPixels
+        );
       }
+
+      // Create new image element to apply filters
+      const img = new Image();
+      img.src = processedImage;
+      img.crossOrigin = "anonymous";
+      
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = () => reject(new Error('Image failed to load'));
+      });
+
   
-      // 3. Create canvas
+      // Create canvas
       const canvas = document.createElement('canvas');
-      canvas.width = imgElement.naturalWidth;
-      canvas.height = imgElement.naturalHeight;
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
       const ctx = canvas.getContext('2d');
   
-      // 4. Apply current filters
-      ctx.filter = window.getComputedStyle(imgElement).filter || 'none';
-      ctx.drawImage(imgElement, 0, 0);
-  
-      // 5. Get base64 data
+      // Apply current filters
+      ctx.filter = `
+        brightness(${adjustments.brightness}%)
+        contrast(${adjustments.contrast}%)
+        saturate(${adjustments.saturation}%)
+        sepia(${adjustments.sepia}%)
+        grayscale(${adjustments.grayscale}%)
+      `;
+      ctx.drawImage(img, 0, 0);
+
+      // Get base64 data
       const mimeType = imageSrc.toLowerCase().endsWith('.png') ? 'image/png' : 'image/jpeg';
       const base64Data = canvas.toDataURL(mimeType, 0.92);
   
-      // 6. Prepare save data
+      // Prepare save data
       const saveData = {
+        userId: String(user.id),
         originalPath: originalPath || imageSrc,
         base64Data,
         title: `${safeTitle}_edited_${Date.now()}`,
         type: mimeType
       };
   
-      // 7. Send to main process
+      // Send to main process
       const result = await window.myAPI.editImage(saveData);
-    
       if (result.success) {
         alert(`Image saved successfully at ${result.path}`);
         navigate('/gallery', { state: { newImage: result.path } });
-        setLoading(false);
     } else {
-        setLoading(false);
         throw new Error(result.error || 'Failed to save image');
       }
     } catch (error) {
-        setLoading(false);
-
       console.error('Save error:', error);
       alert(`Save failed: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 

@@ -24,7 +24,9 @@ export const request = async ({ method, route, body, headers,token=null, params 
       data: body,
       params,
     });
+    console.log(response.data);
     return response.data;
+
   } catch (error) {
     console.error("API Error:", error);
 
