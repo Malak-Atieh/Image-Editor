@@ -34,7 +34,7 @@ const Login = () => {
       console.log(response);
       if (response.success) {
         localStorage.setItem("user",JSON.stringify(response.user));
-        console.log("Stored token:", localStorage.getItem("token")); 
+        localStorage.setItem("token", response.authorization.token);
 
         navigate("/gallery");
       } else if (response.message === "missing attr") {

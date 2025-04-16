@@ -1,82 +1,116 @@
-import { useEffect, useState } from 'react';
-
+// Chat.jsx
+import { useState, useEffect, useRef } from 'react';
+import '../assets/chat.css';
 const Chat = () => {
   const [messages, setMessages] = useState([]);
-  const [socket, setSocket] = useState(null);
-  const token = localStorage.getItem('token');
+  const [input, setInput] = useState('');
+  const [ws, setWs] = useState(null);
+  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     // Connect to WebSocket
-    const ws = new WebSocket('ws://localhost:3001');
+    const socket = new WebSocket('ws://localhost:3001');
+    setWs(socket);
 
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-      if (!token) {
-        console.error('No token found!');
-        return;
-      }
-      // Authenticate with JWT
-      ws.send(JSON.stringify({
-        type: 'auth',
-        token: token
-      }));
+    // Request past messages on open
+    socket.onopen = () => {
+        
+        const token = localStorage.getItem('token');
+        console.log("JWT sent to WS:", token);
+        if (token) {
+            socket.send(JSON.stringify({ 
+              type: 'auth', 
+              token 
+            }));
+          }
     };
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.type === 'history') {
+    // Listen for new messages
+    socket.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.type === 'messages') {
+        console.log(data)
         setMessages(data.messages);
-      } 
-      else if (data.type === 'message') {
+      } else if (data.type === 'new_message') {
+        console.log("here ")
         setMessages(prev => [data, ...prev]);
       }
+
+
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-    };
+    return () => socket.close();
+  }, []);
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-    };
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-    setSocket(ws);
-
-    return () => {
-      ws.close();
-    };
-  }, [token]);
-
-  const sendMessage = (content) => {
-    if (socket && socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({
-        type: 'message',
-        content: content
+  const sendMessage = async () => {
+    if (input.trim() && ws && ws.readyState === WebSocket.OPEN) {
+        
+        try{
+            const tempMessage  = {
+            id: `temp-${Date.now()}`,
+            content: input,
+            name: 'You',
+            timestamp:  new Date().toISOString(),
+            isTemp: true
+          };
+          setMessages(prev => [tempMessage , ...prev]);
+          setInput('');
+       await ws.send(JSON.stringify({ 
+        type: 'new_message', 
+        content: input 
       }));
+     
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      }
     }
   };
 
   return (
-    <div>
-      {/* Message list */}
-      {messages.map(msg => (
-        <div key={msg.id}>
-          <strong>{msg.username}:</strong> {msg.content}
-        </div>
-      ))}
-      
-      {/* Message input */}
-      <input 
-        type="text" 
-        onClick={(e) => {
-          if (e.key === 'Enter' && e.target.value) {
-            sendMessage(e.target.value);
-            e.target.value = '';
-          }
-        }}
-      />
+    <div className="chat-container">
+    
+    <div className="messages">
+      {messages.length === 0 ? (
+        <div className="empty-state">No messages yet. Be the first to chat!</div>
+      ) : (
+        messages.map((msg) => (
+          <div key={msg.id} className="message">
+            <div className="message-header">
+              <strong>{msg.name || `User ${msg.userId}`}</strong>
+              <span className="timestamp">
+              {new Date(msg.created_at).toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+                })}
+              </span>
+            </div>
+            <div className="message-content">{msg.content}</div>
+          </div>
+        ))
+      )}
+      <div ref={messagesEndRef} />
     </div>
+
+    <div className="message-form">
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onKeyUp={(e) => e.key === 'Enter' && sendMessage()}
+        placeholder="Type a message..."
+      />
+      <button onClick={sendMessage}>
+        Send
+      </button>
+    </div>
+  </div>
+
   );
 };
 
