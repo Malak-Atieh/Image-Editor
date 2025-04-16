@@ -4,7 +4,12 @@ const ImageCard = ({ src,path, title, onDelete }) => {
   
 const navigate = useNavigate();
 const handleEdit = () => {
-  navigate("/edit", { state: { image: src } });
+  navigate("/edit", { 
+    state: { 
+      image: src,
+      title,
+      originalPath: src, 
+    } });
 };
 
 const handleDelete = async () => {

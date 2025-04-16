@@ -166,60 +166,58 @@ ipcMain.handle('delete-image', async (event, filePath) => {
 
 ipcMain.handle('save-edited-image', async (event, { 
   originalPath,
-  editedBase64,
-  title ,
+  base64Data,
+  title,
   type 
 }) => {
   try {
-    console.log("here");
+    console.log("save-edited-image handler");
     const imagesDir = app.getPath('userData');
     const imagesPath = path.join(imagesDir, 'images');
     
-    // Ensure images directory exists
     if (!fs.existsSync(imagesPath)) {
       fs.mkdirSync(imagesPath, { recursive: true });
     }
+      console.log("i am here");
 
-    // Generate safe filename
-    const extension = type.split('/')[1] || 'jpg';
-    const safeTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const fileName = `${safeTitle}_${Date.now()}.${extension}`;
+    if (!base64Data || !base64Data.startsWith('data:image')) {
+      throw new Error('Invalid or missing base64 image data');
+    }
+    const buffer = Buffer.from(base64Data , 'base64');
+  
+
+    const fileName = title || `image_${Date.now()}.${type.split('/')[1] || 'jpg'}`;
+    console.log("working");
+
     const filePath = path.join(imagesPath, fileName);
 
-    // Save the image
-    const base64Data = editedBase64.replace(/^data:image\/\w+;base64,/, '');
-    fs.writeFileSync(filePath, Buffer.from(base64Data, 'base64'));
-
-    // Update metadata
+    fs.writeFileSync(filePath, buffer);
+    console.log("still here");
     const dbPath = path.join(imagesDir, 'metadata.json');
-    let db = [];
-    
-    if (fs.existsSync(dbPath)) {
-      db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
-    }
+    let db = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath, 'utf-8')) : [];
 
     const meta = {
-      title: path.parse(fileName).name,
-      fileName,
+      title: path.parse(filePath).name,
+      fileName: fileName,
       path: filePath,
       isEdited: true,
       editedAt: new Date().toISOString(),
       originalPath: originalPath || null
     };
-
+console.log(meta);
     db.push(meta);
     fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 
     return { 
       success: true, 
       path: filePath,
+      fileName: fileName
     };
   } catch (err) {
     console.error('Save error:', err);
     return { 
       success: false, 
-      error: err.message,
-      stack: err.stack 
+      error: err.message    
     };
   }
 });

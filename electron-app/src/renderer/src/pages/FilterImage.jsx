@@ -1,15 +1,21 @@
 import { useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { setTab, setFilter, updateAdjustment } from '../redux/filter/slice';
 import { filterPresets, filterOptions } from '../redux/filter/filterPresets';
+import { Crop, Contrast} from 'lucide-react';
 
 const FilterImage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch =useDispatch();
   const imageSrc = location.state?.image;
+  const rawTitle = location.state?.title || 'image';
+  const originalPath= location.state?.originalPath
+  const title = typeof rawTitle === 'string' ? rawTitle : 'image';
+  const safeTitle = title ? title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'image'; 
   const imageRef = useRef();
+  const croppedImage = location.state?.croppedImage;
 
   const {  selectedTab, selectedFilter, adjustments} 
         = useSelector(
@@ -42,52 +48,47 @@ const FilterImage = () => {
 
   const handleSave= async () => {
     try {
-      // Get the image element properly
-          if (!imageRef.current) {
+      
+      if (!imageRef.current) {
       throw new Error('Image reference not available');
     }
 
     const imgElement = imageRef.current;
 
-    // Wait for image to load if needed
     if (!imgElement.complete) {
       await new Promise((resolve, reject) => {
         imgElement.onload = resolve;
         imgElement.onerror = () => reject(new Error('Image failed to load'));
       });
     }
-      // Create canvas
+
       const canvas = document.createElement('canvas');
       canvas.width = imgElement.naturalWidth;
       canvas.height = imgElement.naturalHeight;
-      
       const ctx = canvas.getContext('2d');
       
-      // Apply current filters from computed style
-      const computedStyle = window.getComputedStyle(imgElement);
-      ctx.filter = computedStyle.filter || 'none';
+      ctx.filter = window.getComputedStyle(imgElement).filter || 'none';
       
-      // Draw the image
-      ctx.drawImage(imgElement, 0, 0, canvas.width, canvas.height);
+      ctx.drawImage(imgElement, 0, 0);
       
-      // Get the base64 data
-      const extension = imageSrc.split('.').pop().toLowerCase();
+      const extension = imageSrc.split('.').pop()?.toLowerCase() || 'jpg';
       const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
       const base64 = canvas.toDataURL(mimeType, 0.92);
 
+      const fileName = `${safeTitle}_edited_${Date.now()}.${extension}`;
       const saveData = {
         originalPath: location.state?.originalPath || imageSrc,
-        base64Data: base64, 
-        title: `Edited_${Date.now()}`,
+        base64Data: base64,
+        title: fileName, 
         type: mimeType
       };
+      console.log(saveData);
 
-      // Send to main process
       const result = await window.myAPI.editImage(saveData);
-  
+    
       if (result.success) {
-        alert('Image saved successfully!');
-        navigate('/gallery');
+        alert(`Image saved as ${result.fileName}`);
+        navigate('/gallery', { state: { newImage: result.path } });
       } else {
         throw new Error(result.error || 'Failed to save image');
       }
@@ -100,6 +101,8 @@ const FilterImage = () => {
   
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
+            <div className="w-full max-w-5xl flex justify-between items-center mb-6">
+
       <h1 className="text-2xl font-bold text-purple-600 mb-6">Image Adjustment</h1>
 
       <div className="flex gap-4 mb-6">
@@ -116,13 +119,21 @@ const FilterImage = () => {
           Back
         </button>
       </div>
-
+</div>
       <div className="flex gap-6 w-full max-w-6xl">
         <div className="w-16 flex flex-col items-center gap-4 py-4 bg-white rounded-xl shadow">
-          <button className="p-2 hover:bg-gray-100 rounded-lg">🖼️</button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg">✂️</button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg">📐</button>
-          <button className="p-2 hover:bg-gray-100 rounded-lg">🎛️</button>
+          <button className="p-2 hover:bg-gray-100 rounded-lg">
+            <Link to={"/crop"}   
+            state={{
+              image: imageSrc,
+              title,
+              originalPath,
+              adjustments: adjustments 
+            }}>
+              <Crop  size={20} />
+            </Link>
+          </button>
+          <button className="p-2 hover:bg-gray-100 rounded-lg"><Contrast  size={20} /></button>
         </div>
 
         <div className="flex-1 bg-white rounded-xl shadow p-4 flex justify-center items-center">
