@@ -204,7 +204,6 @@ ipcMain.handle('save-edited-image', async (event, {
       editedAt: new Date().toISOString(),
       originalPath: originalPath || null
     };
-console.log(meta);
     db.push(meta);
     fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 

@@ -70,8 +70,9 @@ const FilterImage = () => {
       ctx.filter = window.getComputedStyle(imgElement).filter || 'none';
       
       ctx.drawImage(imgElement, 0, 0);
-      
-      const extension = imageSrc.split('.').pop()?.toLowerCase() || 'jpg';
+      const sanitize = (str) => str.replace(/[^a-z0-9]/gi, '_').toLowerCase().slice(0, 20);
+
+      const extension = sanitize(imageSrc.split('.').pop()?.toLowerCase() || 'jpg');
       const mimeType = extension === 'png' ? 'image/png' : 'image/jpeg';
       const base64 = canvas.toDataURL(mimeType, 0.92);
 
