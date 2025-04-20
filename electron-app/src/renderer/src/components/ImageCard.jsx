@@ -19,7 +19,7 @@ const handleDelete = async () => {
   try {
     const result = await window.myAPI.deleteImage(path);
     if (result.success) {
-      onDelete(); // Call parent component's delete handler
+      onDelete(); 
     } else {
       alert("Failed to delete image.");
     }

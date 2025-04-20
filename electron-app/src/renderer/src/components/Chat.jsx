@@ -1,6 +1,7 @@
 // Chat.jsx
 import { useState, useEffect, useRef } from 'react';
 import '../assets/chat.css';
+
 const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
@@ -8,11 +9,9 @@ const Chat = () => {
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
-    // Connect to WebSocket
     const socket = new WebSocket('ws://localhost:3001');
     setWs(socket);
 
-    // Request past messages on open
     socket.onopen = () => {
         
         const token = localStorage.getItem('token');
@@ -25,7 +24,6 @@ const Chat = () => {
           }
     };
 
-    // Listen for new messages
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data);
       if (data.type === 'messages') {
@@ -42,9 +40,6 @@ const Chat = () => {
     return () => socket.close();
   }, []);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
 
   const sendMessage = async () => {
     if (input.trim() && ws && ws.readyState === WebSocket.OPEN) {

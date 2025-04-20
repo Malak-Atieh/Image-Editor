@@ -171,46 +171,55 @@ ipcMain.handle('save-edited-image', async (event, {
   type 
 }) => {
   try {
-    console.log("save-edited-image handler");
+    if (!base64Data || !base64Data.startsWith('data:image')) {
+      throw new Error('Invalid base64 image data');
+    }
+
     const imagesDir = app.getPath('userData');
     const imagesPath = path.join(imagesDir, 'images');
     
     if (!fs.existsSync(imagesPath)) {
       fs.mkdirSync(imagesPath, { recursive: true });
     }
-      console.log("i am here");
 
-    if (!base64Data || !base64Data.startsWith('data:image')) {
-      throw new Error('Invalid or missing base64 image data');
-    }
-    const buffer = Buffer.from(base64Data , 'base64');
-  
+    const base64Content = base64Data.split(';base64,').pop();
+    const buffer = Buffer.from(base64Content, 'base64');
 
-    const fileName = title || `image_${Date.now()}.${type.split('/')[1] || 'jpg'}`;
-    console.log("working");
-
+    const extension = type.split('/')[1] || 'jpg';
+    const fileName = title || `image_${Date.now()}.${extension}`;
     const filePath = path.join(imagesPath, fileName);
 
     fs.writeFileSync(filePath, buffer);
-    console.log("still here");
+
     const dbPath = path.join(imagesDir, 'metadata.json');
-    let db = fs.existsSync(dbPath) ? JSON.parse(fs.readFileSync(dbPath, 'utf-8')) : [];
+    console.log('Metadata location:', dbPath);
+    console.log('Metadata content:', JSON.stringify(db, null, 2));
+    let db = [];
+    
+    if (fs.existsSync(dbPath)) {
+      try {
+        db = JSON.parse(fs.readFileSync(dbPath, 'utf-8'));
+      } catch (err) {
+        console.error('Error reading metadata:', err);
+      }
+    }
 
     const meta = {
       title: path.parse(filePath).name,
-      fileName: fileName,
+      fileName,
       path: filePath,
       isEdited: true,
       editedAt: new Date().toISOString(),
       originalPath: originalPath || null
     };
+
     db.push(meta);
     fs.writeFileSync(dbPath, JSON.stringify(db, null, 2));
 
     return { 
       success: true, 
       path: filePath,
-      fileName: fileName
+      fileName
     };
   } catch (err) {
     console.error('Save error:', err);
