@@ -5,7 +5,7 @@ on:
     branches:
       - main
 jobs:
-  Build-Laravel-And-Push-Docckerhub:
+  Build-And-Push:
     runs-on: ubuntu-latest
 
     steps:
@@ -24,8 +24,8 @@ jobs:
       - name: Push Docker image 
         run: docker push ${{ secrets.DOCKER_USERNAME }}/image-editor:latest
 
-  Deploy-Laravel-Doccker:
-    needs: Build-Laravel-And-Push-Docckerhub
+  Deploy-Laravel-Docker:
+    needs: Build-And-Push
     runs-on: ubuntu-latest
 
     steps:
@@ -39,6 +39,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_key }}
           script: |
+            git pull origin main
             docker-compose down
             docker rmi ${{ secrets.DOCKER_USERNAME }}/image-editor:latest
             docker-compose up -d
