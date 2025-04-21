@@ -19,6 +19,20 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_key }}
           script: |
+            if ! command -v docker &> /dev/null
+            then
+              sudo apt update
+              sudo apt install -y docker.io
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker $USER
+            fi
+            if ! command -v docker-compose &> /dev/null
+            then
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.24.6/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+            cd /home/ubuntu/image-editor
             git pull origin main
             docker-compose down
             docker rmi ${{ secrets.DOCKER_USERNAME }}/image-editor:latest
