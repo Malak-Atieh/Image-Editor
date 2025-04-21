@@ -1,4 +1,4 @@
-name: Push and Deploy
+name: Deploy
 
 on:
   push:
@@ -12,6 +12,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Install SSH key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.EC2_KEY }}
+          known_hosts: 'placeholder'
+
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.10
         with:
@@ -19,7 +25,8 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_key }}
           script: |
-            docker-compose down
-            docker rmi ${{ secrets.DOCKER_USERNAME }}/image-editor:latest
-            docker-compose up -d
+            docker-compose down || true
+            git pull origin main
+            docker-compose up -d --build
+            docker image prune -f
       
